@@ -1,0 +1,19 @@
+name: HiielaProtect
+description: $description
+version: '${version}'
+
+main: ee.henri.hiielaprotect.HiielaProtect
+api-version: '1.20'
+load: POSTWORLD
+
+authors: [ MHenri27 ]
+
+depend:
+  - WorldEdit
+  - WorldGuard
+softdepend:
+  - PlaceholderAPI
+commands:
+  kaitse:
+    description: HiielaProtect main command
+    usage: /<command>
