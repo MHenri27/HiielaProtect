@@ -257,6 +257,19 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
         if (regions == null) return;
+
+        BlockVector3 min = selection.getMinimumPoint();
+        BlockVector3 max = selection.getMaximumPoint();
+
+        boolean expandVert = true;
+        if (args.length >= 3 && args[2].equalsIgnoreCase("no")) {
+            expandVert = false;
+        }
+
+        if (expandVert) {
+            min = BlockVector3.at(min.x(), p.getWorld().getMinHeight(), min.z());
+            max = BlockVector3.at(max.x(), p.getWorld().getMaxHeight() - 1, max.z());
+        }
         
         ProtectedRegion oldRegion = regions.getRegion(regionName);
         if (oldRegion == null) {
@@ -264,7 +277,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             return;
         }
         
-        ProtectedCuboidRegion newRegion = new ProtectedCuboidRegion("temp_move", selection.getMinimumPoint(), selection.getMaximumPoint());
+        ProtectedCuboidRegion newRegion = new ProtectedCuboidRegion("temp_move", min, max);
         ApplicableRegionSet overlaps = regions.getApplicableRegions(newRegion);
         
         for (ProtectedRegion pr : overlaps) {
@@ -274,7 +287,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             }
         }
         
-        ProtectedCuboidRegion finalRegion = new ProtectedCuboidRegion(regionName, selection.getMinimumPoint(), selection.getMaximumPoint());
+        ProtectedCuboidRegion finalRegion = new ProtectedCuboidRegion(regionName, min, max);
         finalRegion.copyFrom(oldRegion);
         
         regions.addRegion(finalRegion);
