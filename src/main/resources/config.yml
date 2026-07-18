@@ -31,6 +31,9 @@ messages:
   usage_removeowner: "<red>Usage: /kaitse removeowner <player> [#region]</red>"
   usage_addmember: "<red>Usage: /kaitse addmember <player> [#region]</red>"
   usage_removemember: "<red>Usage: /kaitse removemember <player> [#region]</red>"
+  cannot_remove_yourself: "<red>Iseennast ei saa alalt eemaldada!"
+  target_already_added: "<red>See mängija on juba alale lisatud."
+  target_not_added: "<red>Seda mängijat ei ole alale lisatud."
   plugin_reloaded: "<green>HiielaProtect configuration reloaded successfully!</green>"
 
 commands_before_create:

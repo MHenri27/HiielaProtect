@@ -24,10 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class KaitseCommand implements CommandExecutor, TabCompleter {
 
@@ -217,6 +214,11 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
+
+        if(!removedFromWG){
+            sender.sendMessage(config.getMessage("region_not_found"));
+            return;
+        }
         
         db.deleteRegion(regionToRemove);
         
@@ -387,17 +389,37 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         
         if (isOwner) {
             if (isAdd) {
+                if (region.getOwners().contains(targetId)){
+                    p.sendMessage(config.getMessage("target_already_added", targetName, regionName, p.getName()));
+                    return;
+                }
                 region.getOwners().addPlayer(targetId);
                 p.sendMessage(config.getMessage("owner_added", targetName, regionName, p.getName()));
             } else {
+                if(Objects.equals(targetName, p.getName())){
+                    p.sendMessage(config.getMessage("cannot_remove_yourself"));
+                    return;
+                }
+                if (!region.getOwners().contains(targetId)){
+                    p.sendMessage(config.getMessage("target_not_added", targetName, regionName, p.getName()));
+                    return;
+                }
                 region.getOwners().removePlayer(targetId);
                 p.sendMessage(config.getMessage("owner_removed", targetName, regionName, p.getName()));
             }
         } else {
             if (isAdd) {
+                if (region.getMembers().contains(targetId)){
+                    p.sendMessage(config.getMessage("target_already_added", targetName, regionName, p.getName()));
+                    return;
+                }
                 region.getMembers().addPlayer(targetId);
                 p.sendMessage(config.getMessage("member_added", targetName, regionName, p.getName()));
             } else {
+                if (!region.getMembers().contains(targetId)){
+                    p.sendMessage(config.getMessage("target_not_added", targetName, regionName, p.getName()));
+                    return;
+                }
                 region.getMembers().removePlayer(targetId);
                 p.sendMessage(config.getMessage("member_removed", targetName, regionName, p.getName()));
             }
