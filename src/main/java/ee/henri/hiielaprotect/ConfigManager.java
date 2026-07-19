@@ -49,6 +49,10 @@ public class ConfigManager {
                  .replace("%player_name%", playerName == null ? "" : playerName)
                  .replace("%command_runner%", commandRunner == null ? "" : commandRunner);
 
+        if (papiEnabled) {
+            msg = PlaceholderAPI.setPlaceholders(null, msg);
+        }
+
         return miniMessage.deserialize(msg);
     }
 
@@ -62,5 +66,9 @@ public class ConfigManager {
 
     public List<String> getCommandsBeforeCreate() {
         return plugin.getConfig().getStringList("commands_before_create");
+    }
+
+    public String getPermissionNode(String key) {
+        return plugin.getConfig().getString("permissions." + key, "");
     }
 }

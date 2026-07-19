@@ -41,7 +41,11 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(config.getMessage("help_message"));
+            if(sender.hasPermission(config.getPermissionNode("admin"))){
+                sender.sendMessage(config.getMessage("staff_help_message"));
+            }else{
+                sender.sendMessage(config.getMessage("player_help_message"));
+            }
             return true;
         }
 
@@ -64,14 +68,18 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         } else if (sub.equalsIgnoreCase(config.getSubcommandName("reload"))) {
             handleReload(sender);
         } else {
-            sender.sendMessage(config.getMessage("help_message"));
+            if(sender.hasPermission(config.getPermissionNode("admin"))){
+                sender.sendMessage(config.getMessage("staff_help_message"));
+            }else{
+                sender.sendMessage(config.getMessage("player_help_message"));
+            }
         }
         
         return true;
     }
 
     private void handleCreate(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("hiielaprotect.admin")) {
+        if (!sender.hasPermission(config.getPermissionNode("admin"))) {
             sender.sendMessage(config.getMessage("no_permission"));
             return;
         }
@@ -159,7 +167,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleRemove(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("hiielaprotect.admin")) {
+        if (!sender.hasPermission(config.getPermissionNode("admin"))) {
             sender.sendMessage(config.getMessage("no_permission"));
             return;
         }
@@ -226,7 +234,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleMove(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("hiielaprotect.admin")) {
+        if (!sender.hasPermission(config.getPermissionNode("admin"))) {
             sender.sendMessage(config.getMessage("no_permission"));
             return;
         }
@@ -314,7 +322,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
     }
     
     private void handleReload(CommandSender sender) {
-        if (!sender.hasPermission("hiielaprotect.admin")) {
+        if (!sender.hasPermission(config.getPermissionNode("admin"))) {
             sender.sendMessage(config.getMessage("no_permission"));
             return;
         }
@@ -378,7 +386,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             return;
         }
         
-        if (!p.hasPermission("hiielaprotect.admin") && !region.getOwners().contains(p.getUniqueId())) {
+        if (!p.hasPermission(config.getPermissionNode("admin")) && !region.getOwners().contains(p.getUniqueId())) {
             p.sendMessage(config.getMessage("not_owner"));
             return;
         }

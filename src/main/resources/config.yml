@@ -8,6 +8,9 @@ command-names:
   removemember: removemember
   reload: reload
 
+permissions:
+  admin: "hiiela.staff"
+
 messages:
   no_permission: "<red>You do not have permission to use this command."
   player_only: "<red>This command can only be run by a player."
@@ -23,7 +26,8 @@ messages:
   owner_removed: "<green>Removed <yellow>%player_name%</yellow> as owner from <yellow>%region_name%</yellow>!</green>"
   member_removed: "<green>Removed <yellow>%player_name%</yellow> as member from <yellow>%region_name%</yellow>!</green>"
   not_owner: "<red>You are not an owner of this region!</red>"
-  help_message: "<gold>--- HiielaProtect Help ---</gold><br><yellow>/kaitse create &lt;player&gt;</yellow><br><yellow>/kaitse remove &lt;player|#region|@here&gt;</yellow><br><yellow>/kaitse move &lt;player|#region&gt;</yellow><br><yellow>/kaitse addowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removeowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse addmember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removemember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse reload</yellow>"
+  staff_help_message: "<gold>--- HiielaProtect Help ---</gold><br><yellow>/kaitse create &lt;player&gt;</yellow><br><yellow>/kaitse remove &lt;player|#region|@here&gt;</yellow><br><yellow>/kaitse move &lt;player|#region&gt;</yellow><br><yellow>/kaitse addowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removeowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse addmember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removemember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse reload</yellow>"
+  player_help_message: ""
   usage_create: "<red>Usage: /kaitse create <player></red>"
   usage_remove: "<red>Usage: /kaitse remove <player|#region|@here></red>"
   usage_move: "<red>Usage: /kaitse move <player|#region></red>"
@@ -36,10 +40,8 @@ messages:
   target_not_added: "<red>Seda mängijat ei ole alale lisatud."
   plugin_reloaded: "<green>HiielaProtect configuration reloaded successfully!</green>"
 
-commands_before_create:
-  - "execute as %player_name% run /expand vert"
+commands_before_create: []
 
 commands_on_create:
-  - "execute as %player_name% run rg flag %region_name% greeting Sisenesid %region_name% alale."
-  - "execute as %player_name% run rg flag %region_name% farewell Lahkusid %region_name% alalt."
-
+  - "execute as %command_runner% run rg flag -w %world% %region_name% greeting Sisenesid %region_name% alale."
+  - "execute as %command_runner% run rg flag -w %world% %region_name% farewell Lahkusid %region_name% alalt."
