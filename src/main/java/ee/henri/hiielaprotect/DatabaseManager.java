@@ -7,6 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DatabaseManager {
 
@@ -35,6 +39,11 @@ public class DatabaseManager {
                         "player_uuid VARCHAR(36)," +
                         "player_name VARCHAR(16)," +
                         "region_name VARCHAR(255))");
+
+                try {
+                    statement.execute("ALTER TABLE regions ADD COLUMN creator_name VARCHAR(16)");
+                } catch (SQLException ignored) {
+                }
             }
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not connect to database!");
@@ -47,6 +56,65 @@ public class DatabaseManager {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<String> getPlayerRegions(String playerName) {
+        List<String> regions = new ArrayList<>();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT region_name FROM regions WHERE player_name = ? COLLATE NOCASE")) {
+            statement.setString(1, playerName);
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    regions.add(rs.getString("region_name"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return regions;
+    }
+
+    public int getCreatorStats(String creatorName) {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT COUNT(*) FROM regions WHERE creator_name = ? COLLATE NOCASE")) {
+            statement.setString(1, creatorName);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public Map<String, Integer> getTop3Creators() {
+        Map<String, Integer> topCreators = new LinkedHashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT creator_name, COUNT(*) as created_count FROM regions " +
+                        "WHERE creator_name IS NOT NULL " +
+                        "GROUP BY creator_name ORDER BY created_count DESC LIMIT 3")) {
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    topCreators.put(rs.getString("creator_name"), rs.getInt("created_count"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return topCreators;
+    }
+
+    public void saveRegion(String playerUuid, String playerName, String regionName, String creatorName) {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO regions (player_uuid, player_name, region_name, creator_name) VALUES (?, ?, ?, ?)")) {
+            statement.setString(1, playerUuid);
+            statement.setString(2, playerName);
+            statement.setString(3, regionName);
+            statement.setString(4, creatorName);
+            statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -76,18 +144,6 @@ public class DatabaseManager {
         return max + 1;
     }
 
-    public void saveRegion(String playerUuid, String playerName, String regionName) {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "INSERT INTO regions (player_uuid, player_name, region_name) VALUES (?, ?, ?)")) {
-            statement.setString(1, playerUuid);
-            statement.setString(2, playerName);
-            statement.setString(3, regionName);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    
     public String getLatestRegion(String playerName) {
         String latest = null;
         int max = 0;
@@ -123,7 +179,7 @@ public class DatabaseManager {
             e.printStackTrace();
         }
     }
-    
+
     public boolean hasRegion(String regionName) {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT 1 FROM regions WHERE region_name = ? COLLATE NOCASE")) {
@@ -136,7 +192,7 @@ public class DatabaseManager {
         }
         return false;
     }
-    
+
     public String getPlayerNameByRegion(String regionName) {
         try (PreparedStatement statement = connection.prepareStatement(
                 "SELECT player_name FROM regions WHERE region_name = ? COLLATE NOCASE")) {

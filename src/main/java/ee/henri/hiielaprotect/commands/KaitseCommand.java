@@ -16,6 +16,8 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import ee.henri.hiielaprotect.ConfigManager;
 import ee.henri.hiielaprotect.DatabaseManager;
 import ee.henri.hiielaprotect.HiielaProtect;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -50,7 +52,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         }
 
         String sub = args[0].toLowerCase();
-        
+
         if (sub.equalsIgnoreCase(config.getSubcommandName("create"))) {
             handleCreate(sender, args);
         } else if (sub.equalsIgnoreCase(config.getSubcommandName("remove"))) {
@@ -67,6 +69,10 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             handleRemoveMember(sender, args);
         } else if (sub.equalsIgnoreCase(config.getSubcommandName("reload"))) {
             handleReload(sender);
+        } else if (sub.equalsIgnoreCase(config.getSubcommandName("info"))) {
+            handleInfo(sender, args);
+        } else if (sub.equalsIgnoreCase(config.getSubcommandName("stats"))) {
+            handleStats(sender, args);
         } else {
             if(sender.hasPermission(config.getPermissionNode("admin"))){
                 sender.sendMessage(config.getMessage("staff_help_message"));
@@ -74,8 +80,56 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(config.getMessage("player_help_message"));
             }
         }
-        
+
         return true;
+    }
+
+    private void handleInfo(CommandSender sender, String[] args) {
+        String targetPlayer = (args.length > 1) ? args[1] : sender.getName();
+
+        List<String> regions = db.getPlayerRegions(targetPlayer);
+
+        if (regions.isEmpty()) {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(config.getRawMessage("info_none").replace("%target_player%", targetPlayer)));
+        } else {
+            List<String> formattedEntries = new ArrayList<>();
+            for (String name : regions) {
+                formattedEntries.add(config.getRawMessage("info_entry").replace("%region_name%", name));
+            }
+
+            String allEntriesJoined = String.join("", formattedEntries);
+            String mainMsg = config.getRawMessage("info_message").replace("%target_player%", targetPlayer).replace("%regions%", String.valueOf(regions.size())).replace("%entries%", allEntriesJoined);
+            sender.sendMessage(MiniMessage.miniMessage().deserialize(mainMsg));
+        }
+    }
+
+    private void handleStats(CommandSender sender, String[] args) {
+        if (!sender.hasPermission(config.getPermissionNode("admin"))) {
+            sender.sendMessage(config.getMessage("no_permission"));
+            return;
+        }
+
+        int personalCount = db.getCreatorStats(sender.getName());
+
+        Map<String, Integer> top3 = db.getTop3Creators();
+        int rank = 1;
+        List<String> formattedEntries = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : top3.entrySet()) {
+            formattedEntries.add(config.getRawMessage("stats_entry").replace("%rank%", String.valueOf(rank)).replace("%creator_name%", entry.getKey()).replace("%count%", String.valueOf(entry.getValue())));
+            rank++;
+        }
+
+        while (rank <= 3) {
+            formattedEntries.add(config.getRawMessage("stats_missing").replace("%rank%", String.valueOf(rank)));
+            rank++;
+        }
+
+        String allEntriesJoined = String.join("", formattedEntries);
+
+        String mainMsg = config.getRawMessage("stats_message").replace("%count%", String.valueOf(personalCount)).replace("%entries%", allEntriesJoined);
+        sender.sendMessage(MiniMessage.miniMessage().deserialize(mainMsg));
+
     }
 
     private void handleCreate(CommandSender sender, String[] args) {
@@ -93,7 +147,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         }
         Player p = (Player) sender;
         String targetName = args[1];
-        
+
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(p));
         Region selection;
         try {
@@ -105,17 +159,17 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
 
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
-        
+
         if (regions == null) return;
-        
+
         BlockVector3 min = selection.getMinimumPoint();
         BlockVector3 max = selection.getMaximumPoint();
-        
+
         boolean expandVert = true;
         if (args.length >= 3 && args[2].equalsIgnoreCase("no")) {
             expandVert = false;
         }
-        
+
         if (expandVert) {
             min = BlockVector3.at(min.x(), p.getWorld().getMinHeight(), min.z());
             max = BlockVector3.at(max.x(), p.getWorld().getMaxHeight() - 1, max.z());
@@ -123,17 +177,17 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
 
         ProtectedCuboidRegion newRegion = new ProtectedCuboidRegion("temp", min, max);
         ApplicableRegionSet overlaps = regions.getApplicableRegions(newRegion);
-        
+
         if (overlaps.size() > 0) {
             p.sendMessage(config.getMessage("region_overlap"));
             return;
         }
-        
+
         int nextNum = db.getNextRegionNumber(targetName);
         String regionName = targetName.toLowerCase() + "_" + nextNum;
-        
+
         ProtectedCuboidRegion finalRegion = new ProtectedCuboidRegion(regionName, min, max);
-        
+
         @SuppressWarnings("deprecation")
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
 
@@ -145,23 +199,23 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                     .replace("%world%", p.getWorld().getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), toRun);
         }
-        
+
         DefaultDomain owners = new DefaultDomain();
         owners.addPlayer(target.getUniqueId());
         finalRegion.setOwners(owners);
-        
+
         regions.addRegion(finalRegion);
-        
-        db.saveRegion(target.getUniqueId().toString(), targetName, regionName);
-        
+
+        db.saveRegion(target.getUniqueId().toString(), targetName, regionName, p.getName());
+
         p.sendMessage(config.getMessage("region_created", targetName, regionName, p.getName()));
 
         for (String cmd : config.getCommandsOnCreate()) {
             String toRun = cmd.replace("%region_name%", regionName)
-                              .replace("%player_name%", targetName)
-                              .replace("%command_runner%", p.getName())
-                              .replace("%region_number%", String.valueOf(nextNum))
-                              .replace("%world%", p.getWorld().getName());
+                    .replace("%player_name%", targetName)
+                    .replace("%command_runner%", p.getName())
+                    .replace("%region_number%", String.valueOf(nextNum))
+                    .replace("%world%", p.getWorld().getName());
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), toRun);
         }
     }
@@ -175,15 +229,15 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(config.getMessage("usage_remove"));
             return;
         }
-        
+
         String arg = args[1];
         String regionToRemove = null;
         Player p = (sender instanceof Player) ? (Player) sender : null;
-        
+
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
 
         boolean usedHere = false;
-        
+
         if (arg.equalsIgnoreCase("@here") && p != null) {
             usedHere = true;
             RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
@@ -202,7 +256,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         } else {
             regionToRemove = db.getLatestRegion(arg);
         }
-        
+
         if (regionToRemove == null) {
             if(usedHere){
                 sender.sendMessage(config.getMessage("region_not_here"));
@@ -211,7 +265,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         boolean removedFromWG = false;
         if (p != null) {
             RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
@@ -234,9 +288,9 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         db.deleteRegion(regionToRemove);
-        
+
         sender.sendMessage(config.getMessage("region_removed", "", regionToRemove, sender.getName()));
     }
 
@@ -256,12 +310,12 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         Player p = (Player) sender;
         String arg = args[1];
         String regionName = arg.startsWith("#") ? arg.substring(1) : db.getLatestRegion(arg);
-        
+
         if (regionName == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         LocalSession session = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(p));
         Region selection;
         try {
@@ -287,35 +341,35 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             min = BlockVector3.at(min.x(), p.getWorld().getMinHeight(), min.z());
             max = BlockVector3.at(max.x(), p.getWorld().getMaxHeight() - 1, max.z());
         }
-        
+
         ProtectedRegion oldRegion = regions.getRegion(regionName);
         if (oldRegion == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         ProtectedCuboidRegion newRegion = new ProtectedCuboidRegion("temp_move", min, max);
         ApplicableRegionSet overlaps = regions.getApplicableRegions(newRegion);
-        
+
         for (ProtectedRegion pr : overlaps) {
             if (!pr.getId().equalsIgnoreCase(regionName)) {
                 p.sendMessage(config.getMessage("region_overlap"));
                 return;
             }
         }
-        
+
         ProtectedCuboidRegion finalRegion = new ProtectedCuboidRegion(regionName, min, max);
         finalRegion.copyFrom(oldRegion);
-        
+
         regions.addRegion(finalRegion);
-        
+
         p.sendMessage(config.getMessage("region_moved", "", regionName, p.getName()));
     }
 
     private void handleAddOwner(CommandSender sender, String[] args) {
         handleModifyUser(sender, args, true, true);
     }
-    
+
     private void handleRemoveOwner(CommandSender sender, String[] args) {
         handleModifyUser(sender, args, true, false);
     }
@@ -323,11 +377,11 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
     private void handleAddMember(CommandSender sender, String[] args) {
         handleModifyUser(sender, args, false, true);
     }
-    
+
     private void handleRemoveMember(CommandSender sender, String[] args) {
         handleModifyUser(sender, args, false, false);
     }
-    
+
     private void handleReload(CommandSender sender) {
         if (!sender.hasPermission(config.getPermissionNode("admin"))) {
             sender.sendMessage(config.getMessage("no_permission"));
@@ -336,7 +390,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         plugin.reloadConfig();
         sender.sendMessage(config.getMessage("plugin_reloaded"));
     }
-    
+
     private void handleModifyUser(CommandSender sender, String[] args, boolean isOwner, boolean isAdd) {
         if (!(sender instanceof Player)) {
             sender.sendMessage(config.getMessage("player_only"));
@@ -348,13 +402,13 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             p.sendMessage(config.getMessage(usageKey));
             return;
         }
-        
+
         String targetName = args[1];
         String regionName = null;
-        
+
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
-        
+
         if (args.length >= 3) {
             String rArg = args[2];
             if (rArg.startsWith("#")) {
@@ -381,27 +435,27 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
-        
+
         if (regionName == null || regions == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         ProtectedRegion region = regions.getRegion(regionName);
         if (region == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
-        
+
         if (!p.hasPermission(config.getPermissionNode("admin")) && !region.getOwners().contains(p.getUniqueId())) {
             p.sendMessage(config.getMessage("not_owner"));
             return;
         }
-        
+
         @SuppressWarnings("deprecation")
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         UUID targetId = target.getUniqueId();
-        
+
         if (isOwner) {
             if (isAdd) {
                 if (region.getOwners().contains(targetId)){
@@ -443,11 +497,11 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        List<String> possibleCompletions = new ArrayList<>();
-        List<String> completions = new ArrayList<>();
+        List<String> fixedCompletions = new ArrayList<>();
+        List<String> playerCompletions = new ArrayList<>();
 
         if (args.length == 1) {
-            possibleCompletions.addAll(Arrays.asList(
+            fixedCompletions.addAll(Arrays.asList(
                     config.getSubcommandName("create"),
                     config.getSubcommandName("remove"),
                     config.getSubcommandName("move"),
@@ -455,41 +509,35 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                     config.getSubcommandName("removeowner"),
                     config.getSubcommandName("addmember"),
                     config.getSubcommandName("removemember"),
-                    config.getSubcommandName("reload")
+                    config.getSubcommandName("reload"),
+                    config.getSubcommandName("info"),
+                    config.getSubcommandName("stats")
             ));
         }
         else if (args.length == 2) {
             String subCommand = args[0];
 
             if (subCommand.equalsIgnoreCase(config.getSubcommandName("remove"))) {
-                possibleCompletions.add("@here");
-                possibleCompletions.add("#regioon");
-                possibleCompletions.add(".offline_player_nimi");
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    possibleCompletions.add(player.getName());
-                }
+                fixedCompletions.add("@here");
+                fixedCompletions.add("#regioon");
+                fixedCompletions.add(".offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) playerCompletions.add(player.getName());
             }
-            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("create"))) {
-                possibleCompletions.add(".offline_player_nimi");
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    possibleCompletions.add(player.getName());
-                }
+            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("create")) || subCommand.equalsIgnoreCase(config.getSubcommandName("info"))) {
+                fixedCompletions.add(".offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) playerCompletions.add(player.getName());
             }
             else if (subCommand.equalsIgnoreCase(config.getSubcommandName("move"))) {
-                possibleCompletions.add("#regioon");
-                possibleCompletions.add(".offline_player_nimi");
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    possibleCompletions.add(player.getName());
-                }
+                fixedCompletions.add("#regioon");
+                fixedCompletions.add(".offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) playerCompletions.add(player.getName());
             }
             else if (subCommand.equalsIgnoreCase(config.getSubcommandName("addowner"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("removeowner"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("addmember"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("removemember"))) {
-                possibleCompletions.add(".offline_player_nimi");
-                for(Player player : Bukkit.getOnlinePlayers()) {
-                    possibleCompletions.add(player.getName());
-                }
+                fixedCompletions.add(".offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) playerCompletions.add(player.getName());
             }
         }
         else if (args.length == 3) {
@@ -497,21 +545,46 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
 
             if (subCommand.equalsIgnoreCase(config.getSubcommandName("create"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("move"))) {
-                possibleCompletions.add("yes");
-                possibleCompletions.add("no");
+                fixedCompletions.add("yes");
+                fixedCompletions.add("no");
             }
             else if (subCommand.equalsIgnoreCase(config.getSubcommandName("addowner"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("removeowner"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("addmember"))
                     || subCommand.equalsIgnoreCase(config.getSubcommandName("removemember"))) {
-                possibleCompletions.add("#regioon");
-                possibleCompletions.add("ala_number");
+
+                List<String> userRegions = db.getPlayerRegions(sender.getName());
+
+                if (userRegions.isEmpty()) {
+                    fixedCompletions.add("#regioon");
+                    fixedCompletions.add(".ala_number");
+                } else {
+                    fixedCompletions.add("#regioon");
+                    fixedCompletions.add(".ala_number");
+                    for (String regName : userRegions) {
+                        fixedCompletions.add(regName);
+                        String[] parts = regName.split("_");
+                        if (parts.length > 1) {
+                            fixedCompletions.add(parts[parts.length - 1]);
+                        }
+                    }
+                }
             }
         }
-        String currentInput = args[args.length - 1];
-        org.bukkit.util.StringUtil.copyPartialMatches(currentInput, possibleCompletions, completions);
-        java.util.Collections.sort(completions);
 
-        return completions;
+        String currentInput = args[args.length - 1];
+
+        List<String> filteredFixed = new ArrayList<>();
+        org.bukkit.util.StringUtil.copyPartialMatches(currentInput, fixedCompletions, filteredFixed);
+        java.util.Collections.sort(filteredFixed);
+
+        List<String> filteredPlayers = new ArrayList<>();
+        org.bukkit.util.StringUtil.copyPartialMatches(currentInput, playerCompletions, filteredPlayers);
+        java.util.Collections.sort(filteredPlayers);
+
+        List<String> finalCompletions = new ArrayList<>(filteredFixed);
+        finalCompletions.addAll(filteredPlayers);
+
+        return finalCompletions;
     }
 }

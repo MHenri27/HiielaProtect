@@ -60,6 +60,16 @@ public class ConfigManager {
         return getMessage(key, (Player) null, "", "");
     }
 
+    public String getRawMessage(String key) {
+        String msg = plugin.getConfig().getString("messages." + key, "");
+
+        if (papiEnabled) {
+            msg = PlaceholderAPI.setPlaceholders(null, msg);
+        }
+
+        return msg;
+    }
+
     public List<String> getCommandsOnCreate() {
         return plugin.getConfig().getStringList("commands_on_create");
     }
