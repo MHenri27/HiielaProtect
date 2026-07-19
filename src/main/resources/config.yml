@@ -1,44 +1,45 @@
 command-names:
-  create: create
-  remove: remove
-  move: move
-  addowner: addowner
-  addmember: addmember
-  removeowner: removeowner
-  removemember: removemember
-  reload: reload
+  create: loo
+  remove: kustuta
+  move: liiguta
+  addowner: lisaomanik
+  addmember: lisaliige
+  removeowner: eemaldaomanik
+  removemember: eemaldaliige
+  reload: taaslae
 
 permissions:
   admin: "hiiela.staff"
 
 messages:
-  no_permission: "<red>You do not have permission to use this command."
-  player_only: "<red>This command can only be run by a player."
-  invalid_args: "<red>Invalid arguments."
-  region_created: "<green>Region <yellow>%region_name%</yellow> created for <yellow>%player_name%</yellow>!</green>"
-  region_overlap: "<red>Your selection overlaps with an existing region!</red>"
-  no_selection: "<red>You must make a WorldEdit selection first!</red>"
-  region_removed: "<green>Region <yellow>%region_name%</yellow> removed successfully!</green>"
-  region_not_found: "<red>Region not found!</red>"
-  region_moved: "<green>Region <yellow>%region_name%</yellow> moved to new selection!</green>"
-  owner_added: "<green>Added <yellow>%player_name%</yellow> as owner to <yellow>%region_name%</yellow>!</green>"
-  member_added: "<green>Added <yellow>%player_name%</yellow> as member to <yellow>%region_name%</yellow>!</green>"
-  owner_removed: "<green>Removed <yellow>%player_name%</yellow> as owner from <yellow>%region_name%</yellow>!</green>"
-  member_removed: "<green>Removed <yellow>%player_name%</yellow> as member from <yellow>%region_name%</yellow>!</green>"
-  not_owner: "<red>You are not an owner of this region!</red>"
-  staff_help_message: "<gold>--- HiielaProtect Help ---</gold><br><yellow>/kaitse create &lt;player&gt;</yellow><br><yellow>/kaitse remove &lt;player|#region|@here&gt;</yellow><br><yellow>/kaitse move &lt;player|#region&gt;</yellow><br><yellow>/kaitse addowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removeowner &lt;player&gt; [#region]</yellow><br><yellow>/kaitse addmember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse removemember &lt;player&gt; [#region]</yellow><br><yellow>/kaitse reload</yellow>"
-  player_help_message: ""
-  usage_create: "<red>Usage: /kaitse create <player></red>"
-  usage_remove: "<red>Usage: /kaitse remove <player|#region|@here></red>"
-  usage_move: "<red>Usage: /kaitse move <player|#region></red>"
-  usage_addowner: "<red>Usage: /kaitse addowner <player> [#region]</red>"
-  usage_removeowner: "<red>Usage: /kaitse removeowner <player> [#region]</red>"
-  usage_addmember: "<red>Usage: /kaitse addmember <player> [#region]</red>"
-  usage_removemember: "<red>Usage: /kaitse removemember <player> [#region]</red>"
+  no_permission: "<red>Nii ei saa teha :C"
+  player_only: "<red>Seda saab kasutada ainult mängija."
+  invalid_args: "<red>Valed või ebasobilikus koguses argumendid."
+  region_created: "<green>Lõid ala <yellow>%region_name%</yellow> mängijale <yellow>%player_name%</yellow>!</green>"
+  region_overlap: "<red>See ala on mingi teise ala sees!</red>"
+  no_selection: "<red>Pead kõigepealt WorldEditiga ala määrama.</red>"
+  region_removed: "<green>Kustutasid ala <yellow>%region_name%</yellow>!</green>"
+  region_not_found: "<red>Täpsustatud ala ei leitud!</red>"
+  region_not_here: "<red>Siit kus sa seisad, ei leitud ala!</red>"
+  region_moved: "<green>Liigutasid ala <yellow>%region_name%</yellow> uuele kohale!</green>"
+  owner_added: "<green>Lisasid mängija <yellow>%player_name%</yellow> omanikuna alale <yellow>%region_name%</yellow>!</green>"
+  member_added: "<green>Lisasid mängija <yellow>%player_name%</yellow> liikmena alale <yellow>%region_name%</yellow>!</green>"
+  owner_removed: "<green>Eemaldasid mängija <yellow>%player_name%</yellow> omaniku rollist alalt <yellow>%region_name%</yellow>!</green>"
+  member_removed: "<green>Eemaldasid mängija <yellow>%player_name%</yellow> liikme rollist alalt <yellow>%region_name%</yellow>!</green>"
+  not_owner: "<red>Sa ei ole selle ala omanik!</red>"
+  staff_help_message: "<gold>--- Kaitsed ---</gold><br> <br><gray>Noolsulgudes (<>) argumendid on vajalikud. Kastsulgudes ([]) argumendid on valikulised.<br><gray>Kui on mitu argumenti samades sulgudes eraldatud postiga (|), siis tuleb sisestada ainult üks antud valikutest.<br><gray>Regiooni (alade) nimede ette käib #. Kui tahad kasutada kasutada ala, kus praegu seisad, siis võid kasutada @here argumendina (kui võimalik).<br><gray>Ala numbriks tahetakse ainult numbrit (mitmes ala).<br><yellow>/kaitse loo <mängija> [no]</yellow> <gray>- Ilma viimase argumendita loob ala vertikaalselt pikendatuna (expand vert). [no] argument määrab, et soovid kindlates määratud mõõtmetes ala.<br><yellow>/kaitse kustuta <mängija|#regioon|@here> <gray>- Kui argumendiks on mängija, kustutab see mängija viimasena lisatud ala.</yellow><br><yellow>/kaitse liiguta <mängija|#regioon> [no] <gray>- Kui esimeseks argumendiks on mängija, liigutab see mängija viimasena lisatud ala. Ilma viimase argumendita liigutab see ala vertikaalselt pikendatuna (expand vert). [no] argument määrab, et soovid kindlates määratud mõõtmetes ala.</yellow><br><yellow>/kaitse lisaomanik <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, lisab see mängija sellele alale, kus seisad.</yellow><br><yellow>/kaitse eemaldaomanik <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, eemaldab see mängija sellelt alalt, kus seisad.</yellow><br><yellow>/kaitse lisaliige <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, lisab see mängija sellele alale, kus seisad.</yellow><br><yellow>/kaitse eemaldaliige <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, eemaldab see mängija sellelt alalt, kus seisad.</yellow><br><yellow>/kaitse taaslae</yellow>"
+  player_help_message: "<gold>--- Kaitsed ---</gold><br> <br><gray>Noolsulgudes (<>) argumendid on vajalikud. Kastsulgudes ([]) argumendid on valikulised.<br><gray>Kui on mitu argumenti samades sulgudes eraldatud postiga (|), siis tuleb sisestada ainult üks antud valikutest.<br><gray>Regiooni (alade) nimede ette käib #.<br><gray>Ala numbriks tahetakse ainult numbrit (mitmes ala).<br><yellow>/kaitse lisaomanik <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, lisab see mängija sellele alale, kus seisad.</yellow><br><yellow>/kaitse eemaldaomanik <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, eemaldab see mängija sellelt alalt, kus seisad.</yellow><br><yellow>/kaitse lisaliige <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, lisab see mängija sellele alale, kus seisad.</yellow><br><yellow>/kaitse eemaldaliige <mängija> [#regioon|ala number] <gray>- Kui viimast argumenti ei ole, eemaldab see mängija sellelt alalt, kus seisad."
+  usage_create: "<red>Kasutus: /kaitse loo <mängija> [no] <gray><- viimane määrab, kas ala peaks olema vertikaalselt pikendatud. Tavaliselt jah.</gray></red>"
+  usage_remove: "<red>Kasutus: /kaitse kustuta <mängija|#regioon|@here></red>"
+  usage_move: "<red>Kasutus: /kaitse liiguta <mängija|#regioon> [no] <gray><- viimane määrab, kas ala peaks olema vertikaalselt pikendatud. Tavaliselt jah.</gray></red>"
+  usage_addowner: "<red>Kasutus: /kaitse lisaomanik <mängija> [#regioon|ala number]</red>"
+  usage_removeowner: "<red>Kasutus: /kaitse eemaldaomanik <mängija> [#regioon|ala number]</red>"
+  usage_addmember: "<red>Kasutus: /kaitse lisaliige <mängija> [#regioon|ala number]</red>"
+  usage_removemember: "<red>Kasutus: /kaitse eemaldaliige <mängija> [#regioon|ala number]</red>"
   cannot_remove_yourself: "<red>Iseennast ei saa alalt eemaldada!"
-  target_already_added: "<red>See mängija on juba alale lisatud."
-  target_not_added: "<red>Seda mängijat ei ole alale lisatud."
-  plugin_reloaded: "<green>HiielaProtect configuration reloaded successfully!</green>"
+  target_already_added: "<red>See mängija on juba alale lisatud!"
+  target_not_added: "<red>Seda mängijat ei ole alale lisatud!"
+  plugin_reloaded: "<green>Konfiguratsioon taaslaetud!</green>"
 
 commands_before_create: []
 

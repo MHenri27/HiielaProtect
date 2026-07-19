@@ -181,8 +181,11 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         Player p = (sender instanceof Player) ? (Player) sender : null;
         
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+
+        boolean usedHere = false;
         
         if (arg.equalsIgnoreCase("@here") && p != null) {
+            usedHere = true;
             RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
             if (regions != null) {
                 BlockVector3 loc = BukkitAdapter.asBlockVector(p.getLocation());
@@ -201,6 +204,10 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         }
         
         if (regionToRemove == null) {
+            if(usedHere){
+                sender.sendMessage(config.getMessage("region_not_here"));
+                return;
+            }
             sender.sendMessage(config.getMessage("region_not_found"));
             return;
         }
