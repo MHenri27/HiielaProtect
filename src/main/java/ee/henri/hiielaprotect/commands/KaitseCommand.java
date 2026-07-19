@@ -266,28 +266,14 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        boolean removedFromWG = false;
-        if (p != null) {
-            RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
-            if (regions != null && regions.hasRegion(regionToRemove)) {
-                regions.removeRegion(regionToRemove);
-                removedFromWG = true;
-            }
-        } else {
-            for (org.bukkit.World w : Bukkit.getWorlds()) {
-                RegionManager rm = container.get(BukkitAdapter.adapt(w));
-                if (rm != null && rm.hasRegion(regionToRemove)) {
-                    rm.removeRegion(regionToRemove);
-                    removedFromWG = true;
-                    break;
-                }
-            }
-        }
+        RegionManager targetRM = getRegionManagerForRegion(regionToRemove);
 
-        if(!removedFromWG){
+        if (targetRM == null) {
             sender.sendMessage(config.getMessage("region_not_found"));
             return;
         }
+
+        targetRM.removeRegion(regionToRemove);
 
         db.deleteRegion(regionToRemove);
 
@@ -342,11 +328,12 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             max = BlockVector3.at(max.x(), p.getWorld().getMaxHeight() - 1, max.z());
         }
 
-        ProtectedRegion oldRegion = regions.getRegion(regionName);
-        if (oldRegion == null) {
+        RegionManager oldWorldRM = getRegionManagerForRegion(regionName);
+        if (oldWorldRM == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
+        ProtectedRegion oldRegion = oldWorldRM.getRegion(regionName);
 
         ProtectedCuboidRegion newRegion = new ProtectedCuboidRegion("temp_move", min, max);
         ApplicableRegionSet overlaps = regions.getApplicableRegions(newRegion);
@@ -361,6 +348,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         ProtectedCuboidRegion finalRegion = new ProtectedCuboidRegion(regionName, min, max);
         finalRegion.copyFrom(oldRegion);
 
+        oldWorldRM.removeRegion(regionName);
         regions.addRegion(finalRegion);
 
         p.sendMessage(config.getMessage("region_moved", "", regionName, p.getName()));
@@ -407,7 +395,7 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         String regionName = null;
 
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionManager regions = container.get(BukkitAdapter.adapt(p.getWorld()));
+        RegionManager targetRM = null;
 
         if (args.length >= 3) {
             String rArg = args[2];
@@ -423,10 +411,12 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
             }
+            targetRM = getRegionManagerForRegion(regionName);
         } else {
-            if (regions != null) {
+            targetRM = container.get(BukkitAdapter.adapt(p.getWorld()));
+            if (targetRM != null) {
                 BlockVector3 loc = BukkitAdapter.asBlockVector(p.getLocation());
-                ApplicableRegionSet set = regions.getApplicableRegions(loc);
+                ApplicableRegionSet set = targetRM.getApplicableRegions(loc);
                 for (ProtectedRegion pr : set) {
                     if (!pr.getId().equalsIgnoreCase("__global__")) {
                         regionName = pr.getId();
@@ -436,12 +426,12 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        if (regionName == null || regions == null) {
+        if (regionName == null || targetRM == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
         }
 
-        ProtectedRegion region = regions.getRegion(regionName);
+        ProtectedRegion region = targetRM.getRegion(regionName);
         if (region == null) {
             p.sendMessage(config.getMessage("region_not_found"));
             return;
@@ -586,5 +576,16 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
         finalCompletions.addAll(filteredPlayers);
 
         return finalCompletions;
+    }
+
+    private RegionManager getRegionManagerForRegion(String regionName) {
+        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        for (org.bukkit.World w : Bukkit.getWorlds()) {
+            RegionManager rm = container.get(BukkitAdapter.adapt(w));
+            if (rm != null && rm.hasRegion(regionName)) {
+                return rm;
+            }
+        }
+        return null;
     }
 }
