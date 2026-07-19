@@ -443,76 +443,75 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        List<String> possibleCompletions = new ArrayList<>();
+        List<String> completions = new ArrayList<>();
+
         if (args.length == 1) {
-            return Arrays.asList(
-                config.getSubcommandName("create"),
-                config.getSubcommandName("remove"),
-                config.getSubcommandName("move"),
-                config.getSubcommandName("addowner"),
-                config.getSubcommandName("removeowner"),
-                config.getSubcommandName("addmember"),
-                config.getSubcommandName("removemember"),
-                config.getSubcommandName("reload")
-            );
+            possibleCompletions.addAll(Arrays.asList(
+                    config.getSubcommandName("create"),
+                    config.getSubcommandName("remove"),
+                    config.getSubcommandName("move"),
+                    config.getSubcommandName("addowner"),
+                    config.getSubcommandName("removeowner"),
+                    config.getSubcommandName("addmember"),
+                    config.getSubcommandName("removemember"),
+                    config.getSubcommandName("reload")
+            ));
         }
+        else if (args.length == 2) {
+            String subCommand = args[0];
 
-        List<String> suggestions = new ArrayList<>();
-
-        if (args.length == 2){
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("remove"))) {
-                suggestions.add("@here");
-                suggestions.add("#regioon");
-                suggestions.add("offline_player_nimi");
+            if (subCommand.equalsIgnoreCase(config.getSubcommandName("remove"))) {
+                possibleCompletions.add("@here");
+                possibleCompletions.add("#regioon");
+                possibleCompletions.add(".offline_player_nimi");
                 for(Player player : Bukkit.getOnlinePlayers()) {
-                    suggestions.add(player.getName());
+                    possibleCompletions.add(player.getName());
                 }
-                return suggestions;
             }
-
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("create"))) {
-                suggestions.add("offline_player_nimi");
+            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("create"))) {
+                possibleCompletions.add(".offline_player_nimi");
                 for(Player player : Bukkit.getOnlinePlayers()) {
-                    suggestions.add(player.getName());
+                    possibleCompletions.add(player.getName());
                 }
-                return suggestions;
             }
-
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("move"))) {
-                suggestions.add("#regioon");
-                suggestions.add("offline_player_nimi");
+            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("move"))) {
+                possibleCompletions.add("#regioon");
+                possibleCompletions.add(".offline_player_nimi");
                 for(Player player : Bukkit.getOnlinePlayers()) {
-                    suggestions.add(player.getName());
+                    possibleCompletions.add(player.getName());
                 }
-                return suggestions;
             }
-
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("addowner"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("removeowner"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("addmember"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("removemember"))) {
-                suggestions.add("offline_player_nimi");
+            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("addowner"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("removeowner"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("addmember"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("removemember"))) {
+                possibleCompletions.add(".offline_player_nimi");
                 for(Player player : Bukkit.getOnlinePlayers()) {
-                    suggestions.add(player.getName());
+                    possibleCompletions.add(player.getName());
                 }
-                return suggestions;
-            }
-        }else if(args.length == 3){
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("create"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("move"))) {
-                suggestions.add("yes");
-                suggestions.add("no");
-                return suggestions;
-            }
-
-            if (args[0].equalsIgnoreCase(config.getSubcommandName("addowner"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("removeowner"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("addmember"))
-                    || args[0].equalsIgnoreCase(config.getSubcommandName("removemember"))) {
-                suggestions.add("#regioon");
-                suggestions.add("ala_number");
-                return suggestions;
             }
         }
-        return new ArrayList<>();
+        else if (args.length == 3) {
+            String subCommand = args[0];
+
+            if (subCommand.equalsIgnoreCase(config.getSubcommandName("create"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("move"))) {
+                possibleCompletions.add("yes");
+                possibleCompletions.add("no");
+            }
+            else if (subCommand.equalsIgnoreCase(config.getSubcommandName("addowner"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("removeowner"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("addmember"))
+                    || subCommand.equalsIgnoreCase(config.getSubcommandName("removemember"))) {
+                possibleCompletions.add("#regioon");
+                possibleCompletions.add("ala_number");
+            }
+        }
+        String currentInput = args[args.length - 1];
+        org.bukkit.util.StringUtil.copyPartialMatches(currentInput, possibleCompletions, completions);
+        java.util.Collections.sort(completions);
+
+        return completions;
     }
 }
