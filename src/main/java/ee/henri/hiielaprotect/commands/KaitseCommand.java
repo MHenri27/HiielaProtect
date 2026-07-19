@@ -455,8 +455,63 @@ public class KaitseCommand implements CommandExecutor, TabCompleter {
                 config.getSubcommandName("reload")
             );
         }
-        if (args.length == 2 && args[0].equalsIgnoreCase(config.getSubcommandName("remove"))) {
-            return Arrays.asList("@here", "#region_name", "player_name");
+
+        List<String> suggestions = new ArrayList<>();
+
+        if (args.length == 2){
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("remove"))) {
+                suggestions.add("@here");
+                suggestions.add("#regioon");
+                suggestions.add("offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) {
+                    suggestions.add(player.getName());
+                }
+                return suggestions;
+            }
+
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("create"))) {
+                suggestions.add("offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) {
+                    suggestions.add(player.getName());
+                }
+                return suggestions;
+            }
+
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("move"))) {
+                suggestions.add("#regioon");
+                suggestions.add("offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) {
+                    suggestions.add(player.getName());
+                }
+                return suggestions;
+            }
+
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("addowner"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("removeowner"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("addmember"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("removemember"))) {
+                suggestions.add("offline_player_nimi");
+                for(Player player : Bukkit.getOnlinePlayers()) {
+                    suggestions.add(player.getName());
+                }
+                return suggestions;
+            }
+        }else if(args.length == 3){
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("create"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("move"))) {
+                suggestions.add("yes");
+                suggestions.add("no");
+                return suggestions;
+            }
+
+            if (args[0].equalsIgnoreCase(config.getSubcommandName("addowner"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("removeowner"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("addmember"))
+                    || args[0].equalsIgnoreCase(config.getSubcommandName("removemember"))) {
+                suggestions.add("#regioon");
+                suggestions.add("ala_number");
+                return suggestions;
+            }
         }
         return new ArrayList<>();
     }
